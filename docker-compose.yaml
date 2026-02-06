@@ -1,0 +1,98 @@
+services:
+
+  # postgresql database for dagster metadata and metabase
+  postgres:
+    image: postgres:16-alpine
+    container_name: wikipulse-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - wikipulse-net
+
+  # dagster webserver (ui)
+  dagster-webserver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wikipulse-webserver
+    command: ["dagster-webserver", "-h", "0.0.0.0", "-p", "3001", "-w", "workspace.yaml"]
+    ports:
+      - "3001:3001"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      DAGSTER_HOME: /opt/dagster/dagster_home
+    volumes:
+      - ./data:/opt/dagster/app/data
+      - ./orchestrator:/opt/dagster/app/orchestrator
+      - ./dbt_src:/opt/dagster/app/dbt_src
+      - ./workspace.yaml:/opt/dagster/app/workspace.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - wikipulse-net
+
+  # dagster daemon (scheduler, sensors, run queue)
+  dagster-daemon:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wikipulse-daemon
+    command: ["dagster-daemon", "run"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      DAGSTER_HOME: /opt/dagster/dagster_home
+    volumes:
+      - ./data:/opt/dagster/app/data
+      - ./orchestrator:/opt/dagster/app/orchestrator
+      - ./dbt_src:/opt/dagster/app/dbt_src
+      - ./workspace.yaml:/opt/dagster/app/workspace.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - wikipulse-net
+
+  # metabase for dashboards
+  metabase:
+    image: metabase/metabase:latest
+    container_name: wikipulse-metabase
+    ports:
+      - "3000:3000"
+    environment:
+      MB_DB_TYPE: ${MB_DB_TYPE}
+      MB_DB_DBNAME: ${MB_DB_DBNAME}
+      MB_DB_PORT: ${MB_DB_PORT}
+      MB_DB_USER: ${MB_DB_USER}
+      MB_DB_PASS: ${MB_DB_PASS}
+      MB_DB_HOST: ${MB_DB_HOST}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - wikipulse-net
+
+volumes:
+  postgres_data:
+
+networks:
+  wikipulse-net:
+    driver: bridge

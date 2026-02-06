@@ -1,0 +1,7 @@
+wikipulse:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: /opt/dagster/app/data/gold/wikipulse.duckdb
+      threads: 4
