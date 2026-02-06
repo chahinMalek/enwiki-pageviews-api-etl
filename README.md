@@ -13,15 +13,14 @@ WikiPulse answers questions like:
 
 ```mermaid
 flowchart LR
-    A[Wikimedia API] --> B[Dagster]
-    B --> C[Bronze (Parquet)]
-    C --> D[Silver (Polars)]
-    D --> E[Gold (dbt/DuckDB)]
-    E --> F[HuggingFace]
+    A["Wikimedia API"] --> B["Dagster"]
+    B --> C["Bronze (Parquet)"]
+    C --> D["Silver (Polars)"]
+    D --> E["Gold (dbt/DuckDB)"]
+    E --> F["HuggingFace"]
 
-    E --> G[PostgreSQL]
-    G --> H[Metabase]
-
+    E --> G["PostgreSQL"]
+    G --> H["Metabase"]
 ```
 
 The entire stack runs locally via Docker Compose.

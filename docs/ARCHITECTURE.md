@@ -5,31 +5,23 @@
 WikiPulse implements a medallion architecture (bronze → silver → gold) for processing Wikipedia pageview data, fully containerized via Docker Compose.
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           Docker Compose Network                             │
-│                                                                             │
-│  ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐      │
-│  │  dagster-webserver│    │  dagster-daemon  │    │    metabase      │      │
-│  │     :3001        │    │                  │    │     :3000        │      │
-│  └────────┬─────────┘    └────────┬─────────┘    └────────┬─────────┘      │
-│           │                       │                       │                 │
-│           │                       │                       │                 │
-│           └───────────┬───────────┘                       │                 │
-│                       │                                   │                 │
-│                       ▼                                   │                 │
-│              ┌────────────────┐                           │                 │
-│              │   PostgreSQL   │◄──────────────────────────┘                 │
-│              │     :5432      │                                             │
-│              │  (metadata +   │                                             │
-│              │   serving)     │                                             │
-│              └────────────────┘                                             │
-│                                                                             │
-│              ┌────────────────┐                                             │
-│              │  Shared Volume │                                             │
-│              │    ./data      │                                             │
-│              │  (Parquet I/O) │                                             │
-│              └────────────────┘                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+flowchart LR
+  subgraph NET["Docker Compose Network"]
+    WS["dagster-webserver<br/>:3001"]
+    DD["dagster-daemon"]
+    MB["metabase<br/>:3000"]
+
+    PG["PostgreSQL<br/>:5432<br/>(metadata + serving)"]
+    VOL["Shared Volume<br/>./data<br/>(Parquet I/O)"]
+
+    WS --> PG
+    DD --> PG
+    MB --> PG
+
+    WS --- VOL
+    DD --- VOL
+  end
+
 ```
 
 ## Components
@@ -67,53 +59,48 @@ Open-source BI tool connected to PostgreSQL for interactive dashboards.
 ## Data Flow
 
 ```
-                    External APIs
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     EXTRACTION                               │
-│  Wikimedia Pageviews API ──► httpx AsyncClient              │
-│  Wikipedia Summary API   ──► (rate limited, retries)        │
-└─────────────────────────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   BRONZE LAYER                               │
-│  data/bronze/daily_top/year=YYYY/month=MM/day=DD.parquet    │
-│  data/bronze/article_meta/articles.parquet                  │
-│                                                             │
-│  Raw API responses, minimal processing                      │
-└─────────────────────────────────────────────────────────────┘
-                         │
-                         ▼ Polars transformations
-┌─────────────────────────────────────────────────────────────┐
-│                   SILVER LAYER                               │
-│  data/silver/pageviews/                                     │
-│  data/silver/articles/                                      │
-│                                                             │
-│  Cleaned: filtered, decoded, validated, deduplicated        │
-└─────────────────────────────────────────────────────────────┘
-                         │
-                         ▼ dbt + DuckDB
-┌─────────────────────────────────────────────────────────────┐
-│                    GOLD LAYER                                │
-│  data/gold/*.parquet  ◄──► PostgreSQL tables                │
-│                                                             │
-│  Models:                                                    │
-│  - dim_articles (dimension)                                 │
-│  - fact_daily_pageviews (incremental fact)                  │
-│  - agg_weekly_summary (aggregate)                           │
-└─────────────────────────────────────────────────────────────┘
-                         │
-          ┌──────────────┴──────────────┐
-          ▼                             ▼
-┌──────────────────┐          ┌──────────────────┐
-│   HuggingFace    │          │    Metabase      │
-│   Datasets       │          │   Dashboard      │
-│                  │          │                  │
-│  Versioned       │          │  "The Daily      │
-│  public dataset  │          │   Pulse"         │
-└──────────────────┘          └──────────────────┘
+flowchart TB
+  EXT["External APIs"]
+
+  subgraph EXTRACT["EXTRACTION"]
+    PV["Wikimedia Pageviews API"]
+    SUM["Wikipedia Summary API"]
+    HTTPX["httpx AsyncClient<br/>(rate limited, retries)"]
+
+    PV --> HTTPX
+    SUM --> HTTPX
+  end
+
+  subgraph BRONZE["BRONZE LAYER"]
+    B1["data/bronze/daily_top/year=YYYY/month=MM/day=DD.parquet"]
+    B2["data/bronze/article_meta/articles.parquet"]
+    BDESC["Raw API responses<br/>minimal processing"]
+  end
+
+  subgraph SILVER["SILVER LAYER"]
+    S1["data/silver/pageviews/"]
+    S2["data/silver/articles/"]
+    SDESC["Cleaned: filtered, decoded, validated,<br/>deduplicated"]
+  end
+
+  subgraph GOLD["GOLD LAYER"]
+    GPARQ["data/gold/*.parquet"]
+    GPG["PostgreSQL tables"]
+    GMODELS["Models:<br/>- dim_articles (dimension)<br/>- fact_daily_pageviews (incremental fact)<br/>- agg_weekly_summary (aggregate)"]
+
+    GPARQ <--> GPG
+  end
+
+  HF["HuggingFace Datasets<br/>Versioned public dataset"]
+  MB["Metabase Dashboard<br/>&quot;The Daily Pulse&quot;"]
+
+  EXT --> EXTRACT
+  EXTRACT --> BRONZE
+  BRONZE -->|"Polars transformations"| SILVER
+  SILVER -->|"dbt + DuckDB"| GOLD
+
+  GOLD --> HF
+  GOLD --> MB
 ```
 
 ## Storage Layout
