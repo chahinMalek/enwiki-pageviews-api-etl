@@ -1,0 +1,89 @@
+# Data directories (Docker volume mount)
+data/
+*.parquet
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# dbt
+dbt_src/target/
+dbt_src/dbt_packages/
+dbt_src/logs/
+dbt_src/.user.yml
+
+# DuckDB
+*.duckdb
+*.duckdb.wal
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Dagster
+.dagster/
+storage/
+schedules/
+history/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# HuggingFace
+.cache/
+huggingface/
+
+# Logs
+*.log
+logs/
+
+# Ignore all md files except README.md.
+# Other documentation files will be placed inside docs/
+!docs/
+*.md
+!README.md
