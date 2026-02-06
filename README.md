@@ -1,4 +1,4 @@
-# WikiPulse: Wikipedia Cultural Trends Pipeline
+# WikiPulse: End-to-End Wiki Pageviews ETL
 
 A data engineering portfolio project that ingests daily top-viewed Wikipedia articles from the Wikimedia Pageviews API, transforms data through a medallion architecture (bronze → silver → gold), and publishes analytical datasets to HuggingFace.
 
