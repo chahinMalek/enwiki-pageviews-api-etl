@@ -91,7 +91,7 @@ wikipulse/
 ```
 GET https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia/all-access/{YYYY}/{MM}/{DD}
 ```
-Returns top ~1,000 most-viewed articles daily. Available from July 2015 to present.
+Returns top ~1,000 most-viewed articles daily. Available from January 2026 to present.
 
 ### Optional: Article Metadata
 ```

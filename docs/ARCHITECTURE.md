@@ -34,7 +34,7 @@ Two containers running from the same image:
 - **dagster-daemon**: Scheduler, sensor, and run execution
 
 Dagster manages:
-- Daily partitioned assets (2015-07-01 to present)
+- Daily partitioned assets (2026-01-01 to present) and unpartitioned assets
 - Asset dependencies and materialization
 - dbt integration via `dagster-dbt`
 - Data quality checks via `@asset_check`
@@ -213,10 +213,11 @@ agg_weekly_summary:
 - Portable across tools (DuckDB, Polars, Spark, etc.)
 
 ### Why Daily Partitions?
-- Natural grain of the source data
+- Natural grain of the source data (applies to `bronze_daily_top`)
 - Enables efficient incremental processing
 - Easy backfill via Dagster partition selector
 - ~1,000 rows per partition keeps files small
+- `bronze_article_meta` is **unpartitioned** — it's an append-only registry that scans all bronze files and fetches metadata only for new titles, avoiding redundant API calls during backfills
 
 ## API Integration
 

@@ -37,7 +37,7 @@ Daily top-viewed articles from Wikimedia Pageviews API.
 
 ### bronze_article_meta
 
-Article metadata from Wikipedia Summary API.
+Article metadata from Wikipedia Summary API. This is an **unpartitioned** asset — it scans all `bronze_daily_top` Parquet files, collects unique titles, and fetches metadata only for titles not already in the registry.
 
 | Field | Type | Description | Example |
 |-------|------|-------------|---------|
@@ -47,7 +47,7 @@ Article metadata from Wikipedia Summary API.
 | `extract` | STRING | Plain-text summary paragraph | `Barack Hussein Obama II is an American...` |
 | `wikibase_item` | STRING | Wikidata Q-ID | `Q76` |
 | `type` | STRING | Article type | `standard`, `disambiguation`, `no-extract` |
-| `first_seen_date` | DATE | Date article first appeared in top list | `2024-01-15` |
+| `first_seen_date` | DATE | Date the metadata was fetched | `2024-01-15` |
 
 **Storage**: `data/bronze/article_meta/articles.parquet`
 
@@ -157,7 +157,7 @@ Weekly aggregated metrics per article.
 - No null `article_title`
 - `views > 0`
 - No filtered pages (Main_Page, Special:*, etc.)
-- Date within expected range (2015-07-01 to today)
+- Date within expected range (2026-01-01 to today)
 
 ### Gold
 - Unique primary keys
