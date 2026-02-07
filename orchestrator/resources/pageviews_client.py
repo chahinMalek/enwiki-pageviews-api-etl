@@ -35,7 +35,7 @@ class WikiPageViewsAPIClient(ConfigurableResource):
 
     async def _fetch_top_articles_async(self, date_str: str) -> list[dict]:
         # validates inputs
-        date_obj = datetime.datetime.strptime(date_str, "%Y-%m-%d")
+        date_obj = datetime.date.fromisoformat(date_str)
         url = (
             f"https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia/all-access/"
             f"{date_obj.year}/{date_obj.month:02d}/{date_obj.day:02d}"
@@ -144,7 +144,7 @@ class WikiPageViewsAPIClient(ConfigurableResource):
                         return None
 
                     if response.status_code in (429, 500, 502, 503, 504):
-                        backoff = self.base_backoff_seconds * (2 ** attempt)
+                        backoff = self.base_backoff_seconds * (2**attempt)
                         jitter = random.uniform(0, backoff * 0.5)
                         wait_time = backoff + jitter
                         logger.warning(
@@ -158,7 +158,7 @@ class WikiPageViewsAPIClient(ConfigurableResource):
                     response.raise_for_status()
 
                 except httpx.TimeoutException:
-                    backoff = self.base_backoff_seconds * (2 ** attempt)
+                    backoff = self.base_backoff_seconds * (2**attempt)
                     jitter = random.uniform(0, backoff * 0.5)
                     wait_time = backoff + jitter
                     logger.warning(
