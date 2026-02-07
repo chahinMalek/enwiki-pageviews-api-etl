@@ -47,7 +47,6 @@ Article metadata from Wikipedia Summary API.
 | `extract` | STRING | Plain-text summary paragraph | `Barack Hussein Obama II is an American...` |
 | `wikibase_item` | STRING | Wikidata Q-ID | `Q76` |
 | `type` | STRING | Article type | `standard`, `disambiguation`, `no-extract` |
-| `thumbnail_url` | STRING | Thumbnail image URL | `https://upload.wikimedia.org/...` |
 | `first_seen_date` | DATE | Date article first appeared in top list | `2024-01-15` |
 
 **Storage**: `data/bronze/article_meta/articles.parquet`
@@ -89,7 +88,6 @@ Cleaned article metadata.
 | `extract` | STRING | Summary paragraph | `Barack Hussein Obama II is an American...` |
 | `wikibase_item` | STRING | Wikidata Q-ID | `Q76` |
 | `article_type` | STRING | Article type | `standard` |
-| `thumbnail_url` | STRING | Thumbnail URL | `https://upload.wikimedia.org/...` |
 | `first_seen_date` | DATE | First appearance date | `2024-01-15` |
 
 **Storage**: `data/silver/articles/*.parquet`
@@ -112,7 +110,6 @@ Article dimension table. One row per unique article.
 | `extract` | STRING | Summary paragraph | `Barack Hussein Obama II is an American...` |
 | `wikibase_item` | STRING | Wikidata Q-ID (for future enrichment) | `Q76` |
 | `article_type` | STRING | Article type | `standard` |
-| `thumbnail_url` | STRING | Thumbnail URL | `https://upload.wikimedia.org/...` |
 | `first_seen_date` | DATE | First appearance in top list | `2024-01-15` |
 
 **Primary Key**: `article_id`

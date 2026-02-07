@@ -145,7 +145,6 @@ bronze_article_meta:
   - extract: STRING
   - wikibase_item: STRING
   - type: STRING
-  - thumbnail_url: STRING
   - first_seen_date: DATE
 ```
 
@@ -165,7 +164,6 @@ silver_articles:
   - extract: STRING
   - wikibase_item: STRING
   - article_type: STRING
-  - thumbnail_url: STRING
   - first_seen_date: DATE
 ```
 
@@ -179,7 +177,6 @@ dim_articles:
   - extract: STRING
   - wikibase_item: STRING
   - article_type: STRING
-  - thumbnail_url: STRING
   - first_seen_date: DATE
 
 fact_daily_pageviews:

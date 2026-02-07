@@ -13,7 +13,7 @@ WikiPulse answers questions like:
 
 ```mermaid
 flowchart LR
-    A["Wikimedia API"] --> B["Dagster"]
+    A["Wikimedia PageViews API"] --> B["Dagster"]
     B --> C["Bronze (Parquet)"]
     C --> D["Silver (Polars)"]
     D --> E["Gold (dbt/DuckDB)"]
