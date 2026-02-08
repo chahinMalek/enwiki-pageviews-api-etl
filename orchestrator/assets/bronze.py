@@ -44,7 +44,7 @@ def bronze_daily_top(
     )
 
     # ensure parent dir exists
-    output_dir = DATA_DIR.joinpath(f"bronze/daily_top/year={dt.year}/month={dt.month:02d}")
+    output_dir = DATA_DIR / f"bronze/daily_top/year={dt.year}/month={dt.month:02d}"
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / f"day={dt.day:02d}.parquet"
 
@@ -61,6 +61,7 @@ def bronze_daily_top(
         },
     )
 
+
 @asset(
     deps=["bronze_daily_top"],
     group_name="bronze",
@@ -76,7 +77,7 @@ def bronze_article_meta(
     Scans all bronze_daily_top files, calculates diffs and articles.parquet and fetches metadata for new articles.
     """
 
-    bronze_dir = DATA_DIR.joinpath("bronze/daily_top")
+    bronze_dir = DATA_DIR / "bronze/daily_top"
     parquet_files = sorted(bronze_dir.rglob("*.parquet"))
 
     if not parquet_files:
@@ -100,7 +101,7 @@ def bronze_article_meta(
     context.log.info(f"Scanned {len(parquet_files)} files, found {len(all_titles)} unique titles")
 
     # load existing articles metadata to filter only on new ones
-    meta_path = DATA_DIR.joinpath("bronze/article_meta/articles.parquet")
+    meta_path = DATA_DIR / "bronze/article_meta/articles.parquet"
     if meta_path.exists():
         existing_df = pl.read_parquet(meta_path)
         existing_titles = set(existing_df["title"].to_list())
@@ -165,7 +166,9 @@ def bronze_article_meta(
     meta_path.parent.mkdir(parents=True, exist_ok=True)
     merged_df.write_parquet(meta_path)
 
-    context.log.info(f"Wrote {len(merged_df)} total articles to {meta_path} ({len(metadata_df)} new)")
+    context.log.info(
+        f"Wrote {len(merged_df)} total articles to {meta_path} ({len(metadata_df)} new)"
+    )
 
     return Output(
         None,

@@ -1,5 +1,4 @@
 import httpx
-import pytest
 import respx
 
 from orchestrator.resources.pageviews_client import WikiPageViewsAPIClient
@@ -16,7 +15,6 @@ SAMPLE_RESPONSE = {
 SAMPLE_METADATA_URL = "https://en.wikipedia.org/api/rest_v1/page/summary/Barack_Obama"
 
 
-@pytest.mark.unit
 class TestFetchArticleMetadata:
     @respx.mock
     def test_fetch_success(self, pageviews_api_client: WikiPageViewsAPIClient):

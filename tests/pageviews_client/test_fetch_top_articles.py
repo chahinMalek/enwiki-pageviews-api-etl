@@ -32,7 +32,6 @@ TOP_ARTICLES_URL = (
 )
 
 
-@pytest.mark.unit
 class TestFetchTopArticles:
     @respx.mock
     def test_fetch_success(self, pageviews_api_client: WikiPageViewsAPIClient):
