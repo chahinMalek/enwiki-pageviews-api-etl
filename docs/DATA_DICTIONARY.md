@@ -59,38 +59,44 @@ Cleaned and validated data.
 
 ### silver_pageviews
 
-Cleaned daily pageview data.
+Cleaned daily pageview data. Partitioned asset (same daily partitions as bronze).
 
 | Field | Type | Description | Example |
 |-------|------|-------------|---------|
-| `view_date` | DATE | Date of pageviews | `2024-01-15` |
-| `article_title` | STRING | Human-readable article title (decoded) | `Barack Obama` |
+| `ingestion_date` | DATE | Date of pageviews | `2026-01-15` |
+| `article` | STRING | Human-readable article title (URL-decoded) | `Barack Obama` |
 | `views` | INT | Total pageviews for the day | `245123` |
 | `rank` | INT | Rank position (1 = most viewed) | `1` |
 
 **Transformations from bronze**:
-- Filtered: `Main_Page`, `Special:*`, `Wikipedia:*`, `File:*`, `Portal:*`
-- URL-decoded: `Barack_Obama` → `Barack Obama`
+- Filtered (case-insensitive): `Main_Page`, `Special:*`, `Wikipedia:*`, `File:*`, `Portal:*`, `Category:*`, `Help:*`
+- URL-decoded: `Barack_Obama` → `Barack Obama`, `Beyonc%C3%A9` → `Beyoncé`
 - Validated: `views > 0`, no null titles
-- Deduplicated by title per day
+- Deduplicated by title per day (keeps highest views)
 
-**Storage**: `data/silver/pageviews/*.parquet`
+**Storage**: `data/silver/pageviews/year=YYYY/month=MM/day=DD.parquet`
 
 ### silver_articles
 
-Cleaned article metadata.
+Cleaned article metadata. Unpartitioned asset.
 
 | Field | Type | Description | Example |
 |-------|------|-------------|---------|
 | `pageid` | INT | Wikipedia page ID | `534366` |
-| `article_title` | STRING | Canonical article title | `Barack Obama` |
-| `description` | STRING | Short description | `44th president of the United States` |
-| `extract` | STRING | Summary paragraph | `Barack Hussein Obama II is an American...` |
+| `title` | STRING | Canonical article title (URL-decoded) | `Barack Obama` |
+| `description` | STRING | Short description (whitespace-stripped) | `44th president of the United States` |
+| `extract` | STRING | Summary paragraph (whitespace-stripped) | `Barack Hussein Obama II is an American...` |
 | `wikibase_item` | STRING | Wikidata Q-ID | `Q76` |
-| `article_type` | STRING | Article type | `standard` |
-| `first_seen_date` | DATE | First appearance date | `2024-01-15` |
+| `type` | STRING | Article type | `standard` |
+| `first_seen_date` | DATE | First appearance date | `2026-01-15` |
 
-**Storage**: `data/silver/articles/*.parquet`
+**Transformations from bronze**:
+- URL-decoded titles: `Barack_Obama` → `Barack Obama`
+- Whitespace stripped from `description` and `extract`
+- Validated: no null `pageid` or `title`
+- Deduplicated by `pageid`
+
+**Storage**: `data/silver/articles/articles.parquet`
 
 ---
 
@@ -154,9 +160,9 @@ Weekly aggregated metrics per article.
 - No duplicate dates
 
 ### Silver
-- No null `article_title`
+- No null `article` / `title`
 - `views > 0`
-- No filtered pages (Main_Page, Special:*, etc.)
+- No filtered pages (Main_Page, Special:*, Wikipedia:*, File:*, Portal:*, Category:*, Help:*)
 - Date within expected range (2026-01-01 to today)
 
 ### Gold
@@ -175,12 +181,14 @@ Wikipedia article titles in URLs use underscores for spaces and percent-encoding
 - `The_Penguin_%28TV_series%29` → `The Penguin (TV series)`
 
 ### Filtered Pages
-The following are excluded from silver/gold as they are not content articles:
-- `Main_Page` - Wikipedia homepage
+The following are excluded from silver/gold as they are not content articles (matching is case-insensitive for namespace prefixes):
+- `Main_Page` - Wikipedia homepage (exact match)
 - `Special:*` - System pages (search, login, etc.)
 - `Wikipedia:*` - Project pages
 - `File:*` - Media file pages
 - `Portal:*` - Portal pages
+- `Category:*` - Category pages
+- `Help:*` - Help pages
 
 ### Wikidata Integration
 The `wikibase_item` field contains Wikidata Q-IDs (e.g., `Q76` for Barack Obama). This enables future enrichment via the Wikidata API to fetch categories, properties, and relationships. Out of scope for v1.

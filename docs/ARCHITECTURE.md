@@ -118,9 +118,13 @@ data/
 │       └── articles.parquet
 ├── silver/
 │   ├── pageviews/
-│   │   └── *.parquet
+│   │   └── year=2026/
+│   │       └── month=01/
+│   │           ├── day=01.parquet
+│   │           ├── day=02.parquet
+│   │           └── ...
 │   └── articles/
-│       └── *.parquet
+│       └── articles.parquet
 └── gold/
     ├── dim_articles.parquet
     ├── fact_daily_pageviews.parquet
@@ -152,18 +156,18 @@ bronze_article_meta:
 
 ```
 silver_pageviews:
-  - view_date: DATE
-  - article_title: STRING
+  - ingestion_date: DATE
+  - article: STRING         # URL-decoded (spaces, not underscores)
   - views: INT
   - rank: INT
 
 silver_articles:
   - pageid: INT
-  - article_title: STRING
-  - description: STRING
-  - extract: STRING
+  - title: STRING           # URL-decoded (spaces, not underscores)
+  - description: STRING     # whitespace-stripped
+  - extract: STRING         # whitespace-stripped
   - wikibase_item: STRING
-  - article_type: STRING
+  - type: STRING
   - first_seen_date: DATE
 ```
 
