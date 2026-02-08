@@ -5,7 +5,6 @@ from urllib.parse import unquote
 import polars as pl
 from dagster import AssetExecutionContext, MetadataValue, Output, asset
 
-from orchestrator.assets import bronze_article_meta
 from orchestrator.partitions import daily_partitions
 
 # constants
@@ -13,7 +12,8 @@ DATA_DIR = Path("data")
 FILTERED_PREFIXES = ("special:", "wikipedia:", "file:", "portal:", "category:", "help:")
 FILTERED_EXACT = frozenset({"Main_Page"})
 
-# Utility functions
+# utility functions
+
 
 def _decode_title(title: str) -> str:
     return unquote(title).replace("_", " ")
@@ -31,6 +31,7 @@ def decode_article_titles(df: pl.DataFrame, col: str = "article") -> pl.DataFram
 
 
 # transforms
+
 
 def transform_daily_pageviews(df: pl.DataFrame) -> pl.DataFrame:
     """
@@ -88,7 +89,9 @@ def silver_pageviews(context: AssetExecutionContext) -> Output[None]:
     partition_date_str = context.partition_key
     dt = datetime.date.fromisoformat(partition_date_str)
 
-    bronze_path = DATA_DIR / f"bronze/daily_top/year={dt.year}/month={dt.month:02d}/day={dt.day:02d}.parquet"
+    bronze_path = (
+        DATA_DIR / f"bronze/daily_top/year={dt.year}/month={dt.month:02d}/day={dt.day:02d}.parquet"
+    )
     if not bronze_path.exists():
         raise FileNotFoundError(f"Bronze file not found: {bronze_path}")
 
