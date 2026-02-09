@@ -24,4 +24,4 @@ models:
       dagster:
         group: gold
     staging:
-      +materialized: view
+      +materialized: table
