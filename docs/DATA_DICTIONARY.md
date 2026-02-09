@@ -106,46 +106,48 @@ Analytical models built with dbt.
 
 ### dim_articles
 
-Article dimension table. One row per unique article.
+Article dimension table (materialized as `table`). One row per unique article.
 
 | Field | Type | Description | Example |
 |-------|------|-------------|---------|
-| `article_id` | STRING | Surrogate key (hash of title) | `a1b2c3d4...` |
+| `article_id` | INT | Wikipedia page ID | `534366` |
 | `article_title` | STRING | Canonical article title | `Barack Obama` |
 | `description` | STRING | Short description | `44th president of the United States` |
-| `extract` | STRING | Summary paragraph | `Barack Hussein Obama II is an American...` |
+| `summary` | STRING | Summary paragraph | `Barack Hussein Obama II is an American...` |
 | `wikibase_item` | STRING | Wikidata Q-ID (for future enrichment) | `Q76` |
 | `article_type` | STRING | Article type | `standard` |
-| `first_seen_date` | DATE | First appearance in top list | `2024-01-15` |
+| `first_seen_date` | DATE | First appearance in top list | `2026-01-15` |
 
 **Primary Key**: `article_id`
 
 ### fact_daily_pageviews
 
-Daily article pageview facts. Incremental model.
+Daily article pageview facts (materialized as `incremental`, merge on `[article_id, view_date]`).
 
 | Field | Type | Description | Example |
 |-------|------|-------------|---------|
-| `article_id` | STRING | Foreign key to dim_articles | `a1b2c3d4...` |
-| `view_date` | DATE | Date of pageviews | `2024-01-15` |
+| `article_id` | INT | Foreign key to dim_articles | `534366` |
+| `view_date` | DATE | Date of pageviews | `2026-01-15` |
 | `views` | INT | Total pageviews | `245123` |
 | `rank` | INT | Daily rank (1 = most viewed) | `1` |
 
 **Primary Key**: `(article_id, view_date)`
 **Foreign Key**: `article_id` → `dim_articles.article_id`
 
-### agg_weekly_summary
+### agg_weekly_pageviews
 
-Weekly aggregated metrics per article.
+Weekly aggregated metrics per article (materialized as `table`).
 
 | Field | Type | Description | Example |
 |-------|------|-------------|---------|
-| `article_id` | STRING | Foreign key to dim_articles | `a1b2c3d4...` |
-| `week_start` | DATE | Monday of the week | `2024-01-15` |
+| `article_id` | INT | Foreign key to dim_articles | `534366` |
+| `week_start` | DATE | Monday of the week (via `date_trunc`) | `2026-01-13` |
 | `total_views` | INT | Sum of views for the week | `1523456` |
 | `avg_daily_views` | FLOAT | Average daily views | `217636.57` |
 | `best_rank` | INT | Best (lowest) rank achieved | `1` |
-| `days_in_top_1000` | INT | Days article appeared in top list | `7` |
+| `days_at_best_rank` | INT | Days article held its best rank | `3` |
+| `avg_rank` | FLOAT | Average daily rank for the week | `12.4` |
+| `days_in_top_1k` | INT | Days article appeared in top list | `7` |
 
 **Primary Key**: `(article_id, week_start)`
 **Foreign Key**: `article_id` → `dim_articles.article_id`

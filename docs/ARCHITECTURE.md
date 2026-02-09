@@ -86,7 +86,7 @@ flowchart TB
   subgraph GOLD["GOLD LAYER"]
     GPARQ["data/gold/*.parquet"]
     GPG["PostgreSQL tables"]
-    GMODELS["Models:<br/>- dim_articles (dimension)<br/>- fact_daily_pageviews (incremental fact)<br/>- agg_weekly_summary (aggregate)"]
+    GMODELS["Models:<br/>- dim_articles (dimension)<br/>- fact_daily_pageviews (incremental fact)<br/>- agg_weekly_pageviews (aggregate)"]
 
     GPARQ <--> GPG
   end
@@ -126,9 +126,7 @@ data/
 │   └── articles/
 │       └── articles.parquet
 └── gold/
-    ├── dim_articles.parquet
-    ├── fact_daily_pageviews.parquet
-    └── agg_weekly_summary.parquet
+    └── wikipulse.duckdb
 ```
 
 ## Data Models
@@ -174,28 +172,30 @@ silver_articles:
 ### Gold Schema (dbt models)
 
 ```
-dim_articles:
-  - article_id: STRING (PK, surrogate from title)
+dim_articles (table):
+  - article_id: INT (PK, from pageid)
   - article_title: STRING
   - description: STRING
-  - extract: STRING
+  - summary: STRING
   - wikibase_item: STRING
   - article_type: STRING
   - first_seen_date: DATE
 
-fact_daily_pageviews:
-  - article_id: STRING (FK)
+fact_daily_pageviews (incremental, merge on [article_id, view_date]):
+  - article_id: INT (FK → dim_articles)
   - view_date: DATE
   - views: INT
   - rank: INT
 
-agg_weekly_summary:
-  - article_id: STRING (FK)
+agg_weekly_pageviews (table):
+  - article_id: INT (FK → dim_articles)
   - week_start: DATE
   - total_views: INT
   - avg_daily_views: FLOAT
   - best_rank: INT
-  - days_in_top_1000: INT
+  - days_at_best_rank: INT
+  - avg_rank: FLOAT
+  - days_in_top_1k: INT
 ```
 
 ## Key Design Decisions
