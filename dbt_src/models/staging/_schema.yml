@@ -1,0 +1,41 @@
+version: 2
+
+models:
+  - name: stg_pageviews
+    description: "Staging view over silver daily pageview Parquet partitions."
+    columns:
+      - name: ingestion_date
+        description: "Date of the pageview data."
+        tests:
+          - not_null
+      - name: article
+        description: "Human-readable article title (URL-decoded)."
+        tests:
+          - not_null
+      - name: views
+        description: "Total pageviews for the day."
+        tests:
+          - not_null
+      - name: rank
+        description: "Daily rank position (1 = most viewed)."
+        tests:
+          - not_null
+
+  - name: stg_articles
+    description: "Staging view over silver article metadata Parquet file."
+    columns:
+      - name: pageid
+        description: "Wikipedia page ID."
+        tests:
+          - unique
+          - not_null
+      - name: title
+        description: "Canonical article title (URL-decoded)."
+        tests:
+          - not_null
+      - name: wikibase_item
+        description: "Wikidata Q-ID."
+      - name: type
+        description: "Article type (standard, disambiguation, etc.)."
+      - name: first_seen_date
+        description: "Date the article first appeared in top list."

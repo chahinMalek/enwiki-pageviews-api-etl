@@ -14,3 +14,14 @@ snapshot-paths: ["snapshots"]
 clean-targets:
   - "target"
   - "dbt_packages"
+
+vars:
+  data_dir: /opt/dagster/app/data
+
+models:
+  wikipulse:
+    +meta:
+      dagster:
+        group: gold
+    staging:
+      +materialized: view

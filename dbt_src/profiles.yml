@@ -5,3 +5,7 @@ wikipulse:
       type: duckdb
       path: /opt/dagster/app/data/gold/wikipulse.duckdb
       threads: 4
+    local:
+      type: duckdb
+      path: ./data/gold/wikipulse.duckdb
+      threads: 4

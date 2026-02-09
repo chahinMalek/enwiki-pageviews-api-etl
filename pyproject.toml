@@ -7,7 +7,7 @@ name = "wikipulse"
 version = "0.1.0"
 description = "End-to-end local ETL pipeline for ingesting daily top-viewed Wikipedia articles from the Wikimedia Pageviews API."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.13"
 license = "MIT"
 dependencies = [
     # Orchestration

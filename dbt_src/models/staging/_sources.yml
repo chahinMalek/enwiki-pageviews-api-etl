@@ -1,0 +1,20 @@
+version: 2
+
+sources:
+  - name: silver
+    description: "Silver layer Parquet files produced by Polars transformations."
+    tables:
+      - name: pageviews
+        description: >
+          Daily pageview data, partitioned by year/month/day.
+          Read via DuckDB read_parquet() with glob pattern.
+        meta:
+          dagster:
+            asset_key: ["silver_pageviews"]
+      - name: articles
+        description: >
+          Article metadata (single file, unpartitioned).
+          Read via DuckDB read_parquet().
+        meta:
+          dagster:
+            asset_key: ["silver_articles"]

@@ -1,4 +1,5 @@
 from orchestrator.assets.bronze import bronze_article_meta, bronze_daily_top
+from orchestrator.assets.gold import gold_dbt_assets
 from orchestrator.assets.silver import silver_articles, silver_pageviews
 
 __all__ = [
@@ -6,4 +7,5 @@ __all__ = [
     "bronze_article_meta",
     "silver_pageviews",
     "silver_articles",
+    "gold_dbt_assets",
 ]
