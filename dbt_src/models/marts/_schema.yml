@@ -1,0 +1,77 @@
+version: 2
+
+models:
+  - name: dim_articles
+    description: "Dimension table for Wikipedia article metadata."
+    columns:
+      - name: article_id
+        description: "Wikipedia page ID."
+        tests:
+          - unique
+          - not_null
+      - name: article_title
+        description: "Canonical article title (URL-decoded)."
+        tests:
+          - not_null
+      - name: description
+        description: "Short article description from Wikipedia."
+      - name: summary
+        description: "Article extract/summary text."
+      - name: wikibase_item
+        description: "Wikidata Q-ID."
+      - name: article_type
+        description: "Article type (standard, disambiguation, etc.)."
+      - name: first_seen_date
+        description: "Date the article first appeared in top list."
+
+  - name: fact_daily_pageviews
+    description: "Daily pageview facts per article, incrementally loaded."
+    columns:
+      - name: article_id
+        description: "Foreign key to dim_articles."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_articles')
+              field: article_id
+      - name: view_date
+        description: "Date of the pageview record."
+        tests:
+          - not_null
+      - name: views
+        description: "Total pageviews for the article on this date."
+        tests:
+          - not_null
+      - name: rank
+        description: "Daily rank position (1 = most viewed)."
+        tests:
+          - not_null
+
+  - name: agg_weekly_pageviews
+    description: "Weekly aggregated pageview statistics per article."
+    columns:
+      - name: article_id
+        description: "Foreign key to dim_articles."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_articles')
+              field: article_id
+      - name: week_start
+        description: "Monday of the aggregation week."
+        tests:
+          - not_null
+      - name: total_views
+        description: "Sum of daily views for the week."
+        tests:
+          - not_null
+      - name: avg_daily_views
+        description: "Average daily views for the week."
+      - name: best_rank
+        description: "Best (lowest) daily rank achieved during the week."
+      - name: days_at_best_rank
+        description: "Number of days the article held its best rank."
+      - name: avg_rank
+        description: "Average daily rank for the week."
+      - name: days_in_top_1k
+        description: "Number of days the article appeared in the top list."
