@@ -21,7 +21,7 @@ select
     sum(p.views) as total_views,
     avg(p.views) as avg_daily_views,
     min(p.rank) as best_rank,
-    count_if(p.rank = p.best_rank_in_week) as days_at_best_rank,
+    count(*) filter (where p.rank = p.best_rank_in_week) as days_at_best_rank,
     avg(p.rank) as avg_rank,
     count(*) as days_in_top_1k
 

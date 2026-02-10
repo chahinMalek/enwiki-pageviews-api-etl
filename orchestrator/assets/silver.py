@@ -1,22 +1,16 @@
 import datetime
 from pathlib import Path
-from urllib.parse import unquote
 
 import polars as pl
 from dagster import AssetExecutionContext, MetadataValue, Output, asset
 
 from orchestrator.partitions import daily_partitions
+from orchestrator.utils import decode_title
 
 # constants
 DATA_DIR = Path("data")
 FILTERED_PREFIXES = ("special:", "wikipedia:", "file:", "portal:", "category:", "help:")
 FILTERED_EXACT = frozenset({"Main_Page"})
-
-# utility functions
-
-
-def _decode_title(title: str) -> str:
-    return unquote(title).replace("_", " ")
 
 
 def filter_non_articles(df: pl.DataFrame, col: str = "article") -> pl.DataFrame:
@@ -27,7 +21,7 @@ def filter_non_articles(df: pl.DataFrame, col: str = "article") -> pl.DataFrame:
 
 
 def decode_article_titles(df: pl.DataFrame, col: str = "article") -> pl.DataFrame:
-    return df.with_columns(pl.col(col).map_elements(_decode_title, return_dtype=pl.Utf8))
+    return df.with_columns(pl.col(col).map_elements(decode_title, return_dtype=pl.Utf8))
 
 
 # transforms
@@ -65,7 +59,7 @@ def transform_article_metadata(df: pl.DataFrame) -> pl.DataFrame:
         3. Validate: no null pageid or title
         4. Deduplicate by pageid
     """
-    df = df.with_columns(pl.col("title").map_elements(_decode_title, return_dtype=pl.Utf8))
+    df = df.with_columns(pl.col("title").map_elements(decode_title, return_dtype=pl.Utf8))
     df = df.with_columns(
         pl.col("description").str.strip_chars(),
         pl.col("extract").str.strip_chars(),

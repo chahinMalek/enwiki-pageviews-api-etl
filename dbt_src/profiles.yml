@@ -2,10 +2,20 @@ wikipulse:
   target: dev
   outputs:
     dev:
-      type: duckdb
-      path: /opt/dagster/app/data/gold/wikipulse.duckdb
+      type: postgres
+      host: "{{ env_var('POSTGRES_HOST', 'postgres') }}"
+      port: 5432
+      user: "{{ env_var('POSTGRES_USER', 'wikipulse') }}"
+      pass: "{{ env_var('POSTGRES_PASSWORD', 'wikipulse') }}"
+      dbname: "{{ env_var('POSTGRES_DB', 'wikipulse') }}"
+      schema: gold
       threads: 4
     local:
-      type: duckdb
-      path: ./data/gold/wikipulse.duckdb
+      type: postgres
+      host: localhost
+      port: 5432
+      user: "{{ env_var('POSTGRES_USER', 'wikipulse') }}"
+      pass: "{{ env_var('POSTGRES_PASSWORD', 'wikipulse') }}"
+      dbname: "{{ env_var('POSTGRES_DB', 'wikipulse') }}"
+      schema: gold
       threads: 4

@@ -1,20 +1,19 @@
 version: 2
 
 sources:
-  - name: silver
-    description: "Silver layer Parquet files produced by Polars transformations."
+  - name: staging
+    description: "Silver layer data loaded into PostgreSQL by Dagster staging assets."
+    schema: staging
     tables:
       - name: pageviews
         description: >
-          Daily pageview data, partitioned by year/month/day.
-          Read via DuckDB read_parquet() with glob pattern.
+          Daily pageview data loaded from silver Parquet partitions.
         meta:
           dagster:
-            asset_key: ["silver_pageviews"]
+            asset_key: ["pg_stg_pageviews"]
       - name: articles
         description: >
-          Article metadata (single file, unpartitioned).
-          Read via DuckDB read_parquet().
+          Article metadata loaded from silver Parquet.
         meta:
           dagster:
-            asset_key: ["silver_articles"]
+            asset_key: ["pg_stg_articles"]

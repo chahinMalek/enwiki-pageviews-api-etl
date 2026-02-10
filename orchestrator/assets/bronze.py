@@ -6,6 +6,7 @@ from dagster import AssetExecutionContext, MetadataValue, Output, asset
 
 from orchestrator.partitions import daily_partitions
 from orchestrator.resources.pageviews_client import WikiPageViewsAPIClient
+from orchestrator.utils import decode_title
 
 DATA_DIR = Path("data")
 
@@ -109,7 +110,11 @@ def bronze_article_meta(
         existing_df = None
         existing_titles = set()
 
-    new_titles = all_titles - existing_titles
+    # Decode bronze titles so they match the format stored in articles.parquet
+    # (bronze has URL-encoded titles like "United_States", existing has "United States")
+    decoded_to_raw = {decode_title(t): t for t in all_titles}
+    new_decoded = set(decoded_to_raw.keys()) - existing_titles
+    new_titles = {decoded_to_raw[t] for t in new_decoded}
     context.log.info(
         f"{len(new_titles):,} new titles to fetch "
         f"({len(existing_titles):,} already tracked, "

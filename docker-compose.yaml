@@ -27,7 +27,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: wikipulse-webserver
-    command: ["dagster-webserver", "-h", "0.0.0.0", "-p", "3001", "-w", "workspace.yaml"]
+    command: ["bash", "-c", "cd /opt/dagster/app/dbt_src && dbt parse && cd /opt/dagster/app && dagster-webserver -h 0.0.0.0 -p 3001 -w workspace.yaml"]
     ports:
       - "3001:3001"
     environment:
@@ -53,7 +53,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: wikipulse-daemon
-    command: ["dagster-daemon", "run"]
+    command: ["bash", "-c", "cd /opt/dagster/app/dbt_src && dbt parse && cd /opt/dagster/app && dagster-daemon run"]
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

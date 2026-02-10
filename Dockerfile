@@ -31,8 +31,7 @@ COPY dbt_src/ dbt_src/
 
 # create data directories
 RUN mkdir -p /opt/dagster/app/data/bronze \
-    /opt/dagster/app/data/silver \
-    /opt/dagster/app/data/gold
+    /opt/dagster/app/data/silver
 
 # expose Dagster webserver port
 EXPOSE 3001
