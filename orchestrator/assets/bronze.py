@@ -161,11 +161,12 @@ def bronze_article_meta(
         pl.col("first_seen_date").cast(pl.Date),
     )
 
-    # merge with existing metadata
+    # merge with existing metadata and deduplicate by pageid
     if existing_df is not None:
         merged_df = pl.concat([existing_df, metadata_df], how="vertical_relaxed")
     else:
         merged_df = metadata_df
+    merged_df = merged_df.unique(subset=["pageid"], keep="first")
 
     # export
     meta_path.parent.mkdir(parents=True, exist_ok=True)
