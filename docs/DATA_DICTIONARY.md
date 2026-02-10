@@ -100,13 +100,52 @@ Cleaned article metadata. Unpartitioned asset.
 
 ---
 
+## Staging Layer (PostgreSQL)
+
+Silver data loaded into PostgreSQL `staging` schema by Dagster assets, serving as dbt sources.
+
+### staging.pageviews
+
+Mirror of silver pageviews Parquet loaded into PostgreSQL. Unpartitioned — contains all dates.
+
+| Field | Type | Description | Example |
+|-------|------|-------------|---------|
+| `ingestion_date` | DATE | Date of pageviews | `2026-01-15` |
+| `article` | STRING | Human-readable article title (URL-decoded) | `Barack Obama` |
+| `views` | INT | Total pageviews for the day | `245123` |
+| `rank` | INT | Rank position (1 = most viewed) | `1` |
+
+**Loaded by**: `pg_stg_pageviews` Dagster asset
+**Storage**: PostgreSQL `staging.pageviews` table
+
+### staging.articles
+
+Mirror of silver articles Parquet loaded into PostgreSQL.
+
+| Field | Type | Description | Example |
+|-------|------|-------------|---------|
+| `pageid` | INT | Wikipedia page ID | `534366` |
+| `title` | STRING | Canonical article title (URL-decoded) | `Barack Obama` |
+| `description` | STRING | Short description (whitespace-stripped) | `44th president of the United States` |
+| `extract` | STRING | Summary paragraph (whitespace-stripped) | `Barack Hussein Obama II is an American...` |
+| `wikibase_item` | STRING | Wikidata Q-ID | `Q76` |
+| `type` | STRING | Article type | `standard` |
+| `first_seen_date` | DATE | First appearance date | `2026-01-15` |
+
+**Loaded by**: `pg_stg_articles` Dagster asset
+**Storage**: PostgreSQL `staging.articles` table
+
+---
+
 ## Gold Layer
 
-Analytical models built with dbt.
+Analytical models built with dbt-postgres, materialized into PostgreSQL `gold` schema.
 
 ### dim_articles
 
-Article dimension table (materialized as `table`). One row per unique article.
+Article dimension table. One row per unique article.
+
+**Storage**: PostgreSQL `gold.dim_articles` table
 
 | Field | Type | Description | Example |
 |-------|------|-------------|---------|
@@ -122,7 +161,9 @@ Article dimension table (materialized as `table`). One row per unique article.
 
 ### fact_daily_pageviews
 
-Daily article pageview facts (materialized as `incremental`, merge on `[article_id, view_date]`).
+Daily article pageview facts (incremental, merge on `[article_id, view_date]`).
+
+**Storage**: PostgreSQL `gold.fact_daily_pageviews` table
 
 | Field | Type | Description | Example |
 |-------|------|-------------|---------|
@@ -136,7 +177,9 @@ Daily article pageview facts (materialized as `incremental`, merge on `[article_
 
 ### agg_weekly_pageviews
 
-Weekly aggregated metrics per article (materialized as `table`).
+Weekly aggregated metrics per article.
+
+**Storage**: PostgreSQL `gold.agg_weekly_pageviews` table
 
 | Field | Type | Description | Example |
 |-------|------|-------------|---------|

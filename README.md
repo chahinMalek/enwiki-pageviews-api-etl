@@ -16,11 +16,10 @@ flowchart LR
     A["Wikimedia PageViews API"] --> B["Dagster"]
     B --> C["Bronze (Parquet)"]
     C --> D["Silver (Polars)"]
-    D --> E["Gold (dbt/DuckDB)"]
-    E --> F["HuggingFace"]
-
-    E --> G["PostgreSQL"]
-    G --> H["Metabase"]
+    D --> E["Staging (PostgreSQL)"]
+    E --> F["Gold (dbt-postgres)"]
+    F --> G["HuggingFace"]
+    F --> H["Metabase"]
 ```
 
 The entire stack runs locally via Docker Compose.
@@ -31,10 +30,10 @@ The entire stack runs locally via Docker Compose.
 |-----------|------|
 | Extraction | Python (`httpx`) |
 | Orchestration | Dagster |
-| Storage | Parquet on Docker volume |
-| Analytical Engine | DuckDB |
-| Transformation | dbt Core + dbt-duckdb |
-| Serving Layer | PostgreSQL |
+| Storage (Bronze/Silver) | Parquet on Docker volume |
+| Transformation (Silver) | Polars |
+| Transformation (Gold) | dbt Core + dbt-postgres |
+| Database | PostgreSQL (staging + gold schemas) |
 | Visualization | Metabase |
 | Publishing | HuggingFace Hub |
 
@@ -65,7 +64,7 @@ docker compose up -d
 
 1. Open Dagster UI at `http://localhost:3001`
 2. Navigate to Assets
-3. Materialize assets in order: bronze → silver → gold
+3. Materialize assets in order: bronze → silver → staging → gold
 4. For historical backfill, use the partition selector
 
 ## Project Structure

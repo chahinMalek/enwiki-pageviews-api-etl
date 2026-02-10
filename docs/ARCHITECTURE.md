@@ -39,18 +39,12 @@ Dagster manages:
 - dbt integration via `dagster-dbt`
 - Data quality checks via `@asset_check`
 
-### DuckDB (Analytical Engine)
-
-Runs embedded within the Dagster process—no separate container. Used for:
-- Reading Parquet files efficiently
-- dbt transformations (dbt-duckdb adapter)
-- Exporting gold layer Parquet
-
 ### PostgreSQL
 
-Single instance serving dual purposes:
+Single instance serving three purposes:
 1. **Dagster metadata**: Run history, asset catalog, schedules
-2. **Serving layer**: Materialized gold models for Metabase queries
+2. **Staging layer**: Silver data loaded from Parquet by Dagster (`staging` schema)
+3. **Gold layer**: dbt mart tables for Metabase queries (`gold` schema)
 
 ### Metabase (Visualization)
 
@@ -83,12 +77,15 @@ flowchart TB
     SDESC["Cleaned: filtered, decoded, validated,<br/>deduplicated"]
   end
 
-  subgraph GOLD["GOLD LAYER"]
-    GPARQ["data/gold/*.parquet"]
-    GPG["PostgreSQL tables"]
-    GMODELS["Models:<br/>- dim_articles (dimension)<br/>- fact_daily_pageviews (incremental fact)<br/>- agg_weekly_pageviews (aggregate)"]
+  subgraph STAGING["STAGING (PostgreSQL)"]
+    STG1["staging.pageviews"]
+    STG2["staging.articles"]
+    STDESC["Silver data loaded into PostgreSQL<br/>by Dagster staging assets"]
+  end
 
-    GPARQ <--> GPG
+  subgraph GOLD["GOLD LAYER (PostgreSQL)"]
+    GPG["gold.dim_articles<br/>gold.fact_daily_pageviews<br/>gold.agg_weekly_pageviews"]
+    GMODELS["dbt-postgres models:<br/>- dim_articles (dimension)<br/>- fact_daily_pageviews (incremental fact)<br/>- agg_weekly_pageviews (aggregate)"]
   end
 
   HF["HuggingFace Datasets<br/>Versioned public dataset"]
@@ -97,7 +94,8 @@ flowchart TB
   EXT --> EXTRACT
   EXTRACT --> BRONZE
   BRONZE -->|"Polars transformations"| SILVER
-  SILVER -->|"dbt + DuckDB"| GOLD
+  SILVER -->|"Dagster staging assets"| STAGING
+  STAGING -->|"dbt-postgres"| GOLD
 
   GOLD --> HF
   GOLD --> MB
@@ -116,17 +114,24 @@ data/
 │   │           └── ...
 │   └── article_meta/
 │       └── articles.parquet
-├── silver/
-│   ├── pageviews/
-│   │   └── year=2026/
-│   │       └── month=01/
-│   │           ├── day=01.parquet
-│   │           ├── day=02.parquet
-│   │           └── ...
-│   └── articles/
-│       └── articles.parquet
-└── gold/
-    └── wikipulse.duckdb
+└── silver/
+    ├── pageviews/
+    │   └── year=2026/
+    │       └── month=01/
+    │           ├── day=01.parquet
+    │           ├── day=02.parquet
+    │           └── ...
+    └── articles/
+        └── articles.parquet
+
+PostgreSQL (wikipulse database):
+├── staging schema
+│   ├── pageviews            # loaded from silver Parquet by Dagster
+│   └── articles             # loaded from silver Parquet by Dagster
+└── gold schema
+    ├── dim_articles         # dbt mart model
+    ├── fact_daily_pageviews # dbt mart model (incremental)
+    └── agg_weekly_pageviews # dbt mart model
 ```
 
 ## Data Models
@@ -200,17 +205,13 @@ agg_weekly_pageviews (table):
 
 ## Key Design Decisions
 
-### Why DuckDB Embedded?
-- No network overhead for analytical queries
-- Native Parquet support without external dependencies
-- Handles full dataset (~3-4M rows) in milliseconds
-- dbt-duckdb adapter provides seamless integration
+### Why PostgreSQL for Gold?
+- Single database for both transformation output and Metabase serving
+- Stable serving layer with JDBC support and concurrent connections
+- dbt-postgres adapter is battle-tested and well-supported
+- Dagster staging assets bridge the gap from Parquet (silver) to PostgreSQL (gold)
 
-### Why Dual PostgreSQL + DuckDB?
-- DuckDB: Fast analytical queries during transformation
-- PostgreSQL: Stable serving layer for Metabase (JDBC support, concurrent connections)
-
-### Why Parquet Throughout?
+### Why Parquet Throughout (Bronze/Silver)?
 - Columnar format optimized for analytical workloads
 - Compression reduces storage footprint
 - Schema embedded in files
