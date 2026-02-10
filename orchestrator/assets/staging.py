@@ -1,19 +1,11 @@
-import os
 from pathlib import Path
 
 import polars as pl
 from dagster import AssetExecutionContext, MetadataValue, Output, asset
 
+from orchestrator.utils import get_pg_connection_string
+
 DATA_DIR = Path("data")
-
-
-def _get_pg_connection_string() -> str:
-    user = os.environ.get("POSTGRES_USER", "wikipulse")
-    password = os.environ.get("POSTGRES_PASSWORD", "wikipulse")
-    host = os.environ.get("POSTGRES_HOST", "localhost")
-    port = os.environ.get("POSTGRES_PORT", "5432")
-    db = os.environ.get("POSTGRES_DB", "wikipulse")
-    return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{db}"
 
 
 @asset(
@@ -28,7 +20,7 @@ def pg_stg_pageviews(context: AssetExecutionContext) -> Output[None]:
     row_count = len(df)
     context.log.info(f"Read {row_count} rows from silver pageviews Parquet files")
 
-    conn = _get_pg_connection_string()
+    conn = get_pg_connection_string()
     df.write_database("staging.pageviews", conn, if_table_exists="replace")
     context.log.info(f"Wrote {row_count} rows to staging.pageviews")
 
@@ -57,7 +49,7 @@ def pg_stg_articles(context: AssetExecutionContext) -> Output[None]:
     row_count = len(df)
     context.log.info(f"Read {row_count} rows from {parquet_path}")
 
-    conn = _get_pg_connection_string()
+    conn = get_pg_connection_string()
     df.write_database("staging.articles", conn, if_table_exists="replace")
     context.log.info(f"Wrote {row_count} rows to staging.articles")
 
