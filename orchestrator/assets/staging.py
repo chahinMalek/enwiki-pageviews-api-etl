@@ -1,12 +1,16 @@
-from pathlib import Path
-
 import polars as pl
 from dagster import AssetExecutionContext, MetadataValue, Output, asset
 
-from orchestrator.utils import get_pg_connection_string
+from orchestrator.config import DATA_DIR
+from orchestrator.config import get_pg_connection_params
 
-DATA_DIR = Path("data")
 
+def _get_pg_connection_string() -> str:
+    params = get_pg_connection_params()
+    return (
+        f"postgresql+psycopg2://{params['user']}:{params['password']}"
+        f"@{params['host']}:{params['port']}/{params['dbname']}"
+    )
 
 @asset(
     deps=["silver_pageviews"],
@@ -20,7 +24,7 @@ def pg_stg_pageviews(context: AssetExecutionContext) -> Output[None]:
     row_count = len(df)
     context.log.info(f"Read {row_count} rows from silver pageviews Parquet files")
 
-    conn = get_pg_connection_string()
+    conn = _get_pg_connection_string()
     df.write_database("staging.pageviews", conn, if_table_exists="replace")
     context.log.info(f"Wrote {row_count} rows to staging.pageviews")
 
@@ -49,7 +53,7 @@ def pg_stg_articles(context: AssetExecutionContext) -> Output[None]:
     row_count = len(df)
     context.log.info(f"Read {row_count} rows from {parquet_path}")
 
-    conn = get_pg_connection_string()
+    conn = _get_pg_connection_string()
     df.write_database("staging.articles", conn, if_table_exists="replace")
     context.log.info(f"Wrote {row_count} rows to staging.articles")
 

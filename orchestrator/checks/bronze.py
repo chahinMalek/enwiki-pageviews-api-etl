@@ -1,21 +1,18 @@
 import datetime
-from pathlib import Path
 
 import polars as pl
 from dagster import AssetCheckResult, AssetCheckSeverity, asset_check
 
 from orchestrator.assets.bronze import bronze_article_meta, bronze_daily_top
+from orchestrator.config import DATA_DIR
 
-DATA_DIR = Path("data")
 EXPECTED_COLUMNS = {"ingestion_date", "article", "views", "rank"}
 
 
 @asset_check(asset=bronze_daily_top, description="Partition has at least one row.", blocking=True)
 def bronze_daily_top_row_count(context) -> AssetCheckResult:
     dt = datetime.date.fromisoformat(context.partition_key)
-    path = (
-        DATA_DIR / f"bronze/daily_top/year={dt.year}/month={dt.month:02d}/day={dt.day:02d}.parquet"
-    )
+    path = DATA_DIR / f"bronze/daily_top/year={dt.year}/month={dt.month:02d}/day={dt.day:02d}.parquet"
     df = pl.read_parquet(path)
     row_count = len(df)
     return AssetCheckResult(
@@ -28,9 +25,7 @@ def bronze_daily_top_row_count(context) -> AssetCheckResult:
 @asset_check(asset=bronze_daily_top, description="All expected columns are present.", blocking=True)
 def bronze_daily_top_expected_columns(context) -> AssetCheckResult:
     dt = datetime.date.fromisoformat(context.partition_key)
-    path = (
-        DATA_DIR / f"bronze/daily_top/year={dt.year}/month={dt.month:02d}/day={dt.day:02d}.parquet"
-    )
+    path = DATA_DIR / f"bronze/daily_top/year={dt.year}/month={dt.month:02d}/day={dt.day:02d}.parquet"
     df = pl.read_parquet(path)
     actual = set(df.columns)
     missing = EXPECTED_COLUMNS - actual

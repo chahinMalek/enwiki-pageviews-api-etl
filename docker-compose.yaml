@@ -36,6 +36,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_HOST: ${POSTGRES_HOST}
       DAGSTER_HOME: /opt/dagster/dagster_home
+      METABASE_URL: ${METABASE_URL}
+      METABASE_EMAIL: ${METABASE_EMAIL}
+      METABASE_PASSWORD: ${METABASE_PASSWORD}
     volumes:
       - ./data:/opt/dagster/app/data
       - ./orchestrator:/opt/dagster/app/orchestrator
@@ -60,6 +63,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_HOST: ${POSTGRES_HOST}
       DAGSTER_HOME: /opt/dagster/dagster_home
+      METABASE_URL: {METABASE_URL}
+      METABASE_EMAIL: ${METABASE_EMAIL}
+      METABASE_PASSWORD: ${METABASE_PASSWORD}
     volumes:
       - ./data:/opt/dagster/app/data
       - ./orchestrator:/opt/dagster/app/orchestrator
@@ -78,12 +84,12 @@ services:
     ports:
       - "3000:3000"
     environment:
-      MB_DB_TYPE: ${MB_DB_TYPE}
-      MB_DB_DBNAME: ${MB_DB_DBNAME}
-      MB_DB_PORT: ${MB_DB_PORT}
-      MB_DB_USER: ${MB_DB_USER}
-      MB_DB_PASS: ${MB_DB_PASS}
-      MB_DB_HOST: ${MB_DB_HOST}
+      MB_DB_TYPE: ${METABASE_DB_TYPE}
+      MB_DB_DBNAME: ${METABASE_DB_DBNAME}
+      MB_DB_PORT: ${METABASE_DB_PORT}
+      MB_DB_USER: ${METABASE_DB_USER}
+      MB_DB_PASS: ${METABASE_DB_PASS}
+      MB_DB_HOST: ${METABASE_DB_HOST}
     depends_on:
       postgres:
         condition: service_healthy

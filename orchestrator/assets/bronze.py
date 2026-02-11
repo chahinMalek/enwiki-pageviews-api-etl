@@ -1,14 +1,12 @@
 import datetime
-from pathlib import Path
 
 import polars as pl
 from dagster import AssetExecutionContext, MetadataValue, Output, asset
 
+from orchestrator.config import DATA_DIR
 from orchestrator.partitions import daily_partitions
 from orchestrator.resources.pageviews_client import WikiPageViewsAPIClient
 from orchestrator.utils import decode_title
-
-DATA_DIR = Path("data")
 
 
 @asset(

@@ -1,7 +1,7 @@
 import psycopg2
 from dagster import AssetCheckResult, AssetCheckSeverity, AssetKey, asset_check
 
-from orchestrator.utils import get_pg_connection_params
+from orchestrator.config import get_pg_connection_params
 
 
 @asset_check(

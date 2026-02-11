@@ -1,26 +1,25 @@
 import datetime
-from pathlib import Path
 
 import polars as pl
 from dagster import AssetExecutionContext, MetadataValue, Output, asset
 
+from orchestrator.config import DATA_DIR
 from orchestrator.partitions import daily_partitions
 from orchestrator.utils import decode_title
 
 # constants
-DATA_DIR = Path("data")
 FILTERED_PREFIXES = ("special:", "wikipedia:", "file:", "portal:", "category:", "help:")
 FILTERED_EXACT = frozenset({"Main_Page"})
 
 
-def filter_non_articles(df: pl.DataFrame, col: str = "article") -> pl.DataFrame:
+def _filter_non_articles(df: pl.DataFrame, col: str = "article") -> pl.DataFrame:
     mask = ~pl.col(col).is_in(list(FILTERED_EXACT))
     for prefix in FILTERED_PREFIXES:
         mask = mask & ~pl.col(col).str.to_lowercase().str.starts_with(prefix)
     return df.filter(mask)
 
 
-def decode_article_titles(df: pl.DataFrame, col: str = "article") -> pl.DataFrame:
+def _decode_article_titles(df: pl.DataFrame, col: str = "article") -> pl.DataFrame:
     return df.with_columns(pl.col(col).map_elements(decode_title, return_dtype=pl.Utf8))
 
 
@@ -38,8 +37,8 @@ def transform_daily_pageviews(df: pl.DataFrame) -> pl.DataFrame:
         4. Deduplicate by title per day (keep the highest views)
         5. Sort by rank
     """
-    df = filter_non_articles(df)
-    df = decode_article_titles(df)
+    df = _filter_non_articles(df)
+    df = _decode_article_titles(df)
     df = df.filter(pl.col("views") > 0)
     df = df.filter(pl.col("article").is_not_null())
     df = df.sort("views", descending=True).unique(
@@ -83,9 +82,7 @@ def silver_pageviews(context: AssetExecutionContext) -> Output[None]:
     partition_date_str = context.partition_key
     dt = datetime.date.fromisoformat(partition_date_str)
 
-    bronze_path = (
-        DATA_DIR / f"bronze/daily_top/year={dt.year}/month={dt.month:02d}/day={dt.day:02d}.parquet"
-    )
+    bronze_path = DATA_DIR / f"bronze/daily_top/year={dt.year}/month={dt.month:02d}/day={dt.day:02d}.parquet"
     if not bronze_path.exists():
         raise FileNotFoundError(f"Bronze file not found: {bronze_path}")
 
