@@ -82,7 +82,9 @@ def silver_pageviews(context: AssetExecutionContext) -> Output[None]:
     partition_date_str = context.partition_key
     dt = datetime.date.fromisoformat(partition_date_str)
 
-    bronze_path = DATA_DIR / f"bronze/daily_top/year={dt.year}/month={dt.month:02d}/day={dt.day:02d}.parquet"
+    bronze_path = (
+        DATA_DIR / f"bronze/daily_top/year={dt.year}/month={dt.month:02d}/day={dt.day:02d}.parquet"
+    )
     if not bronze_path.exists():
         raise FileNotFoundError(f"Bronze file not found: {bronze_path}")
 

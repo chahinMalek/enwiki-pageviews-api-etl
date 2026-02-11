@@ -15,7 +15,9 @@ from orchestrator.config import DATA_DIR
 @asset_check(asset=silver_pageviews, description="No null article titles.", blocking=True)
 def silver_pageviews_no_null_titles(context) -> AssetCheckResult:
     dt = datetime.date.fromisoformat(context.partition_key)
-    path = DATA_DIR / f"silver/pageviews/year={dt.year}/month={dt.month:02d}/day={dt.day:02d}.parquet"
+    path = (
+        DATA_DIR / f"silver/pageviews/year={dt.year}/month={dt.month:02d}/day={dt.day:02d}.parquet"
+    )
     df = pl.read_parquet(path, columns=["article"])
     null_count = df["article"].null_count()
     return AssetCheckResult(
@@ -28,7 +30,9 @@ def silver_pageviews_no_null_titles(context) -> AssetCheckResult:
 @asset_check(asset=silver_pageviews, description="All views between 1 and 1 billion.")
 def silver_pageviews_views_in_range(context) -> AssetCheckResult:
     dt = datetime.date.fromisoformat(context.partition_key)
-    path = DATA_DIR / f"silver/pageviews/year={dt.year}/month={dt.month:02d}/day={dt.day:02d}.parquet"
+    path = (
+        DATA_DIR / f"silver/pageviews/year={dt.year}/month={dt.month:02d}/day={dt.day:02d}.parquet"
+    )
     df = pl.read_parquet(path, columns=["views"])
     out_of_range = df.filter((pl.col("views") < 1) | (pl.col("views") > 1_000_000_000))
     return AssetCheckResult(
@@ -45,7 +49,9 @@ def silver_pageviews_views_in_range(context) -> AssetCheckResult:
 )
 def silver_pageviews_no_filtered_pages(context) -> AssetCheckResult:
     dt = datetime.date.fromisoformat(context.partition_key)
-    path = DATA_DIR / f"silver/pageviews/year={dt.year}/month={dt.month:02d}/day={dt.day:02d}.parquet"
+    path = (
+        DATA_DIR / f"silver/pageviews/year={dt.year}/month={dt.month:02d}/day={dt.day:02d}.parquet"
+    )
     df = pl.read_parquet(path, columns=["article"])
 
     exact_matches = df.filter(pl.col("article").is_in(list(FILTERED_EXACT)))

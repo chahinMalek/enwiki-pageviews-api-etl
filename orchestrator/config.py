@@ -1,5 +1,4 @@
 import os
-
 from pathlib import Path
 
 DATA_DIR = Path("data")
@@ -16,6 +15,7 @@ def get_pg_connection_params() -> dict:
         "dbname": os.environ.get("POSTGRES_DB", "wikipulse"),
     }
 
+
 def get_metabase_config() -> dict:
     """Read Metabase connection settings from environment variables."""
     return {
@@ -24,5 +24,7 @@ def get_metabase_config() -> dict:
         "metabase_password": os.environ.get("METABASE_PASSWORD", "W1k!Pulse2026"),
         "request_timeout_seconds": float(os.environ.get("METABASE_REQUEST_TIMEOUT", "30")),
         "startup_max_wait_seconds": float(os.environ.get("METABASE_STARTUP_TIMEOUT", "120")),
-        "startup_poll_interval_seconds": float(os.environ.get("METABASE_STARTUP_POLL_INTERVAL", "5")),
+        "startup_poll_interval_seconds": float(
+            os.environ.get("METABASE_STARTUP_POLL_INTERVAL", "5")
+        ),
     }

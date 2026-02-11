@@ -284,9 +284,7 @@ class MetabaseResource(ConfigurableResource):
             f"/api/dashboard/{dashboard_id}",
             json={"dashcards": dashcards},
         )
-        logger.info(
-            f"Updated dashboard id={dashboard_id} with {len(dashcards)} cards"
-        )
+        logger.info(f"Updated dashboard id={dashboard_id} with {len(dashcards)} cards")
         return resp.json()
 
     def ensure_dashboard(

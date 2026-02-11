@@ -1,8 +1,7 @@
 import polars as pl
 from dagster import AssetExecutionContext, MetadataValue, Output, asset
 
-from orchestrator.config import DATA_DIR
-from orchestrator.config import get_pg_connection_params
+from orchestrator.config import DATA_DIR, get_pg_connection_params
 
 
 def _get_pg_connection_string() -> str:
@@ -11,6 +10,7 @@ def _get_pg_connection_string() -> str:
         f"postgresql+psycopg2://{params['user']}:{params['password']}"
         f"@{params['host']}:{params['port']}/{params['dbname']}"
     )
+
 
 @asset(
     deps=["silver_pageviews"],
