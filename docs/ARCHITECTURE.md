@@ -84,8 +84,8 @@ flowchart TB
   end
 
   subgraph GOLD["GOLD LAYER (PostgreSQL)"]
-    GPG["gold.dim_articles<br/>gold.fact_daily_pageviews<br/>gold.agg_weekly_pageviews"]
-    GMODELS["dbt-postgres models:<br/>- dim_articles (dimension)<br/>- fact_daily_pageviews (incremental fact)<br/>- agg_weekly_pageviews (aggregate)"]
+    GPG["gold.dim_articles<br/>gold.fact_daily_pageviews<br/>gold.agg_weekly_pageviews<br/>gold.trending_articles<br/>gold.weekly_movers"]
+    GMODELS["dbt-postgres models:<br/>- dim_articles (dimension)<br/>- fact_daily_pageviews (incremental fact)<br/>- agg_weekly_pageviews (aggregate)<br/>- trending_articles (dashboard)<br/>- weekly_movers (dashboard)"]
   end
 
   HF["HuggingFace Datasets<br/>Versioned public dataset"]
@@ -131,7 +131,9 @@ PostgreSQL (wikipulse database):
 └── gold schema
     ├── dim_articles         # dbt mart model
     ├── fact_daily_pageviews # dbt mart model (incremental)
-    └── agg_weekly_pageviews # dbt mart model
+    ├── agg_weekly_pageviews # dbt mart model
+    ├── trending_articles    # dbt mart model (dashboard)
+    └── weekly_movers        # dbt mart model (dashboard)
 ```
 
 ## Data Models
@@ -201,6 +203,20 @@ agg_weekly_pageviews (table):
   - days_at_best_rank: INT
   - avg_rank: FLOAT
   - days_in_top_1k: INT
+
+trending_articles (table):
+  - article_title: STRING
+  - latest_rank: INT
+  - latest_views: INT
+  - avg_rank_7d: FLOAT
+  - rank_improvement: FLOAT
+
+weekly_movers (table):
+  - article_title: STRING
+  - this_week_views: INT
+  - prev_week_views: INT
+  - view_change: INT
+  - view_change_pct: FLOAT
 ```
 
 ## Key Design Decisions
