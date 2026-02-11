@@ -75,3 +75,45 @@ models:
         description: "Average daily rank for the week."
       - name: days_in_top_1k
         description: "Number of days the article appeared in the top list."
+
+  - name: trending_articles
+    description: "Articles trending up based on rank improvement vs 7-day average."
+    columns:
+      - name: article_title
+        description: "Canonical article title."
+        tests:
+          - not_null
+      - name: latest_rank
+        description: "Article rank on the most recent date."
+        tests:
+          - not_null
+      - name: latest_views
+        description: "Article views on the most recent date."
+      - name: avg_rank_7d
+        description: "Average rank over the past 7 days."
+      - name: rank_improvement
+        description: "Rank improvement (avg_rank_7d - latest_rank). Positive = trending up."
+
+  - name: weekly_movers
+    description: "Week-over-week view changes for the latest complete week."
+    columns:
+      - name: article_title
+        description: "Canonical article title."
+        tests:
+          - not_null
+      - name: week_start
+        description: "Monday of the current aggregation week."
+        tests:
+          - not_null
+      - name: this_week_views
+        description: "Total views for the current week."
+        tests:
+          - not_null
+      - name: prev_week_views
+        description: "Total views for the previous week."
+        tests:
+          - not_null
+      - name: view_change
+        description: "Absolute change in views (this_week - prev_week)."
+      - name: view_change_pct
+        description: "Percentage change in views week-over-week."
