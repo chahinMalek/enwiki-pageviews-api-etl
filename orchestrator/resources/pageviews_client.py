@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import random
+import time
 
 import httpx
 from dagster import ConfigurableResource, get_dagster_logger
@@ -11,14 +12,15 @@ class WikiPageViewsAPIClient(ConfigurableResource):
     Dagster resource for interacting with Wikimedia PageViews APIs.
 
     Features:
-    - httpx.AsyncClient internal usage with semaphore-based rate limiting
-    - retry logic includes exponential backoff with jitter
+    - Sync httpx.Client for single-request endpoints (top articles)
+    - Async httpx.AsyncClient with semaphore rate limiting for batch endpoints (article metadata)
+    - Exponential backoff with jitter on retryable errors
     """
 
     user_agent: str = "WikiPulse/1.0 (contact@email.com)"
-    max_concurrent_requests: int = 10
+    max_concurrent_requests: int = 4
     max_retries: int = 5
-    base_backoff_seconds: float = 1.0
+    base_backoff_seconds: float = 2.0
     request_timeout_seconds: float = 30.0
 
     def fetch_top_articles(self, date_str: str) -> list[dict]:
@@ -31,22 +33,17 @@ class WikiPageViewsAPIClient(ConfigurableResource):
         Returns:
             List of dicts with keys: article, views, rank.
         """
-        return asyncio.run(self._fetch_top_articles_async(date_str))
-
-    async def _fetch_top_articles_async(self, date_str: str) -> list[dict]:
-        # validates inputs
         date_obj = datetime.date.fromisoformat(date_str)
         url = (
             f"https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia/all-access/"
             f"{date_obj.year}/{date_obj.month:02d}/{date_obj.day:02d}"
         )
 
-        semaphore = asyncio.Semaphore(self.max_concurrent_requests)
-        async with httpx.AsyncClient(
+        with httpx.Client(
             headers={"User-Agent": self.user_agent},
             timeout=self.request_timeout_seconds,
         ) as client:
-            data = await self._request_with_retry(client, semaphore, url)
+            data = self._request_with_retry(client, url)
 
         if data is None:
             raise RuntimeError(f"No articles found for date {date_str}")
@@ -103,7 +100,7 @@ class WikiPageViewsAPIClient(ConfigurableResource):
         title: str,
     ) -> dict | None:
         url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{title}"
-        data = await self._request_with_retry(client, semaphore, url)
+        data = await self._arequest_with_retry(client, semaphore, url)
 
         if data is None:
             return None
@@ -117,14 +114,62 @@ class WikiPageViewsAPIClient(ConfigurableResource):
             "type": data.get("type", ""),
         }
 
-    async def _request_with_retry(
+    def _backoff(self, attempt: int) -> float:
+        backoff = self.base_backoff_seconds * (2**attempt)
+        jitter = random.uniform(0, backoff * 0.5)
+        return backoff + jitter
+
+    def _request_with_retry(self, client: httpx.Client, url: str) -> dict | None:
+        """
+        Synchronous HTTP GET with exponential backoff.
+
+        Returns parsed JSON dict on success, None on 404.
+        Raises RuntimeError after max_retries exhausted on retryable errors.
+        """
+        logger = get_dagster_logger()
+
+        for attempt in range(self.max_retries):
+            try:
+                response = client.get(url)
+
+                if response.status_code == 200:
+                    return response.json()
+
+                if response.status_code == 404:
+                    logger.warning(f"404 Not Found: {url}")
+                    return None
+
+                if response.status_code in (429, 500, 502, 503, 504):
+                    wait_time = self._backoff(attempt)
+                    logger.warning(
+                        f"HTTP {response.status_code} on {url}, "
+                        f"retry {attempt + 1}/{self.max_retries} in {wait_time:.1f}s"
+                    )
+                    time.sleep(wait_time)
+                    continue
+
+                # non-retryable error
+                response.raise_for_status()
+
+            except httpx.TimeoutException:
+                wait_time = self._backoff(attempt)
+                logger.warning(
+                    f"Timeout on {url}, "
+                    f"retry {attempt + 1}/{self.max_retries} in {wait_time:.1f}s"
+                )
+                time.sleep(wait_time)
+                continue
+
+        raise RuntimeError(f"Max retries ({self.max_retries}) exhausted for {url}")
+
+    async def _arequest_with_retry(
         self,
         client: httpx.AsyncClient,
         semaphore: asyncio.Semaphore,
         url: str,
     ) -> dict | None:
         """
-        Make an HTTP GET request with semaphore rate limiting and exponential backoff.
+        Async HTTP GET with semaphore rate limiting and exponential backoff.
 
         Returns parsed JSON dict on success, None on 404.
         Raises RuntimeError after max_retries exhausted on retryable errors.
@@ -144,9 +189,7 @@ class WikiPageViewsAPIClient(ConfigurableResource):
                         return None
 
                     if response.status_code in (429, 500, 502, 503, 504):
-                        backoff = self.base_backoff_seconds * (2**attempt)
-                        jitter = random.uniform(0, backoff * 0.5)
-                        wait_time = backoff + jitter
+                        wait_time = self._backoff(attempt)
                         logger.warning(
                             f"HTTP {response.status_code} on {url}, "
                             f"retry {attempt + 1}/{self.max_retries} in {wait_time:.1f}s"
@@ -158,9 +201,7 @@ class WikiPageViewsAPIClient(ConfigurableResource):
                     response.raise_for_status()
 
                 except httpx.TimeoutException:
-                    backoff = self.base_backoff_seconds * (2**attempt)
-                    jitter = random.uniform(0, backoff * 0.5)
-                    wait_time = backoff + jitter
+                    wait_time = self._backoff(attempt)
                     logger.warning(
                         f"Timeout on {url}, "
                         f"retry {attempt + 1}/{self.max_retries} in {wait_time:.1f}s"

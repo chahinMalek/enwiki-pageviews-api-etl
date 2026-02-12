@@ -28,3 +28,11 @@ def get_metabase_config() -> dict:
             os.environ.get("METABASE_STARTUP_POLL_INTERVAL", "5")
         ),
     }
+
+
+def get_pageviews_config() -> dict:
+    """Read PageViews client configs from environment variables."""
+    return {
+        "max_concurrent_requests": int(os.environ.get("PAGEVIEWS_CONCURRENCY", "4")),
+        "max_retries": int(os.environ.get("PAGEVIEWS_MAX_RETRIES", "5")),
+    }

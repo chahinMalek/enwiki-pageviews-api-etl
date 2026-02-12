@@ -22,12 +22,12 @@ from orchestrator.checks.silver import (
     silver_pageviews_no_null_titles,
     silver_pageviews_views_in_range,
 )
-from orchestrator.config import get_metabase_config
+from orchestrator.config import get_metabase_config, get_pageviews_config
 from orchestrator.resources import MetabaseResource
 from orchestrator.resources.pageviews_client import WikiPageViewsAPIClient
 
 resources = {
-    "api_client": WikiPageViewsAPIClient(),
+    "api_client": WikiPageViewsAPIClient(**get_pageviews_config()),
     "dbt": DbtCliResource(project_dir=dbt_project),
     "metabase": MetabaseResource(**get_metabase_config()),
 }
