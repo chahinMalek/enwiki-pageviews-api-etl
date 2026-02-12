@@ -88,7 +88,6 @@ flowchart TB
     GMODELS["dbt-postgres models:<br/>- dim_articles (dimension)<br/>- fact_daily_pageviews (incremental fact)<br/>- agg_weekly_pageviews (aggregate)<br/>- trending_articles (dashboard)<br/>- weekly_movers (dashboard)"]
   end
 
-  HF["HuggingFace Datasets<br/>Versioned public dataset"]
   MB["Metabase Dashboard<br/>&quot;The Daily Pulse&quot;"]
 
   EXT --> EXTRACT
@@ -97,7 +96,6 @@ flowchart TB
   SILVER -->|"Dagster staging assets"| STAGING
   STAGING -->|"dbt-postgres"| GOLD
 
-  GOLD --> HF
   GOLD --> MB
 ```
 
@@ -256,6 +254,5 @@ weekly_movers (table):
 ## Security Considerations
 
 - No secrets in code (use environment variables)
-- HuggingFace token optional and loaded from env
 - PostgreSQL credentials via Docker Compose env
 - No external network access required except API calls
