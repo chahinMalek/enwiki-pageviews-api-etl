@@ -46,6 +46,7 @@ services:
       - ./orchestrator:/opt/dagster/app/orchestrator
       - ./dbt_src:/opt/dagster/app/dbt_src
       - ./workspace.yaml:/opt/dagster/app/workspace.yaml
+      - dagster_home:/opt/dagster/dagster_home
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,6 +76,7 @@ services:
       - ./orchestrator:/opt/dagster/app/orchestrator
       - ./dbt_src:/opt/dagster/app/dbt_src
       - ./workspace.yaml:/opt/dagster/app/workspace.yaml
+      - dagster_home:/opt/dagster/dagster_home
     depends_on:
       postgres:
         condition: service_healthy
@@ -102,6 +104,7 @@ services:
 
 volumes:
   postgres_data:
+  dagster_home:
 
 networks:
   wikipulse-net:
