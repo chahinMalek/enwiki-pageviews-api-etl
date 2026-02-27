@@ -58,3 +58,74 @@ jobs:
       - name: Parse dbt project
         working-directory: dbt_src
         run: uv run dbt parse
+
+  dbt-build:
+    name: dbt Build & Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: wikipulse
+          POSTGRES_PASSWORD: wikipulse
+          POSTGRES_DB: wikipulse
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_USER: wikipulse
+      POSTGRES_PASSWORD: wikipulse
+      POSTGRES_DB: wikipulse
+      PGPASSWORD: wikipulse
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Create schemas
+        run: psql -h localhost -U wikipulse -d wikipulse -f init-scripts/init-gold-schema.sql
+
+      - name: Create staging tables
+        run: |
+          psql -h localhost -U wikipulse -d wikipulse <<'SQL'
+          CREATE TABLE staging.pageviews (
+            ingestion_date  date   NOT NULL,
+            article         text   NOT NULL,
+            views           bigint NOT NULL,
+            rank            bigint NOT NULL
+          );
+          CREATE TABLE staging.articles (
+            pageid          bigint NOT NULL,
+            title           text   NOT NULL,
+            description     text,
+            extract         text,
+            wikibase_item   text,
+            type            text,
+            first_seen_date date
+          );
+          SQL
+
+      - name: Load staging seed data
+        run: |
+          psql -h localhost -U wikipulse -d wikipulse \
+            -c "\copy staging.pageviews FROM 'tests/seed_data/staging_pageviews.csv' CSV HEADER"
+          psql -h localhost -U wikipulse -d wikipulse \
+            -c "\copy staging.articles FROM 'tests/seed_data/staging_articles.csv' CSV HEADER"
+
+      - name: dbt run
+        working-directory: dbt_src
+        run: uv run dbt run --profiles-dir .
+
+      - name: dbt test
+        working-directory: dbt_src
+        run: uv run dbt test --profiles-dir .
