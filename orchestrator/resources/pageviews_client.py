@@ -154,8 +154,7 @@ class WikiPageViewsAPIClient(ConfigurableResource):
             except httpx.TimeoutException:
                 wait_time = self._backoff(attempt)
                 logger.warning(
-                    f"Timeout on {url}, "
-                    f"retry {attempt + 1}/{self.max_retries} in {wait_time:.1f}s"
+                    f"Timeout on {url}, retry {attempt + 1}/{self.max_retries} in {wait_time:.1f}s"
                 )
                 time.sleep(wait_time)
                 continue
