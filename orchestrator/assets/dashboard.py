@@ -1,8 +1,8 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 from dagster import AssetExecutionContext, MaterializeResult, asset
 
-from orchestrator.config import get_pg_connection_params
+from orchestrator.config import get_pg_config
 from orchestrator.resources.metabase import MetabaseResource
 
 
@@ -141,7 +141,7 @@ def metabase_dashboard(
     dashboard_desc = "Daily Wikipedia article page views dashboard"
 
     pg_params = {
-        **get_pg_connection_params(),
+        **asdict(get_pg_config()),
         "schema-filters-type": "inclusion",
         "schema-filters-patterns": "gold",
     }

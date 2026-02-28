@@ -1,7 +1,8 @@
 import psycopg2
+from dataclasses import asdict
 from dagster import AssetCheckResult, AssetCheckSeverity, AssetKey, asset_check
 
-from orchestrator.config import get_pg_connection_params
+from orchestrator.config import get_pg_config
 
 
 @asset_check(
@@ -10,7 +11,7 @@ from orchestrator.config import get_pg_connection_params
     blocking=True,
 )
 def gold_fact_has_data(context) -> AssetCheckResult:
-    conn = psycopg2.connect(**get_pg_connection_params())
+    conn = psycopg2.connect(**asdict(get_pg_config()))
     try:
         cursor = conn.cursor()
         cursor.execute("SELECT count(*) FROM gold.fact_daily_pageviews")
@@ -30,7 +31,7 @@ def gold_fact_has_data(context) -> AssetCheckResult:
     blocking=True,
 )
 def gold_referential_integrity(context) -> AssetCheckResult:
-    conn = psycopg2.connect(**get_pg_connection_params())
+    conn = psycopg2.connect(**asdict(get_pg_config()))
     try:
         cursor = conn.cursor()
         cursor.execute("""
@@ -54,7 +55,7 @@ def gold_referential_integrity(context) -> AssetCheckResult:
     description="Weekly aggregated total_views matches sum of daily fact views.",
 )
 def gold_aggregate_reconciliation(context) -> AssetCheckResult:
-    conn = psycopg2.connect(**get_pg_connection_params())
+    conn = psycopg2.connect(**asdict(get_pg_config()))
     try:
         cursor = conn.cursor()
         cursor.execute("""
