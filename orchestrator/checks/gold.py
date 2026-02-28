@@ -1,5 +1,6 @@
-import psycopg2
 from dataclasses import asdict
+
+import psycopg2
 from dagster import AssetCheckResult, AssetCheckSeverity, AssetKey, asset_check
 
 from orchestrator.config import get_pg_config
